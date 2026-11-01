@@ -6,7 +6,7 @@ AI Plush Manta 將 **AMB82-Mini 實體控制器**與 Android 裝置上的 **Goog
 
 ## Product concept
 
-![AI Plush Manta product concept](assets/manta_product_concept.png)
+![AI Plush Manta product concept](assets/manta_product_concept.svg)
 
 *AI-generated concept rendering. The image illustrates the intended product direction; it is not a photograph of a completed physical prototype.*
 
