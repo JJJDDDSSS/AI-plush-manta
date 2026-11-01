@@ -6,9 +6,9 @@ AI Plush Manta 將 **AMB82-Mini 實體控制器**與 Android 裝置上的 **Goog
 
 ## Product concept
 
-![AI Plush Manta product concept](assets/manta_product_concept.svg)
+![AI Manta complete system overview](assets/manta_system_overview.svg)
 
-*Concept illustration of the intended product direction; it is not a photograph of a completed physical prototype. The photorealistic AI-generated render is still to be added as a repository image asset.*
+*System overview infographic showing the plush device, AMB82-Mini, Android AI host, and Manta innovation tools.*
 
 ## Highlights
 
@@ -19,7 +19,7 @@ AI Plush Manta 將 **AMB82-Mini 實體控制器**與 Android 裝置上的 **Goog
 - **Completion notification:** a sound and happy/celebration expression when the timer reaches zero.
 - **Privacy-first behavior:** no continuous image/audio upload by default; camera and microphone activity should be visibly indicated.
 
-## System overview
+## Innovation features\n\n### 1. Focus Flow — voice-controlled Pomodoro\n- Natural-language duration setting, pause, resume, cancel, and remaining-time query.\n- Optional focus/rest cycles (default proposal: 25-minute focus + 5-minute break; user can choose another duration).\n- Distinct LED expressions for focus, paused, completed, and break states.\n- The embedded countdown runs locally, independently of AI inference and network latency.\n\n### 2. Emotion & Interaction States\n- Manta uses a small, explicit state set: happy, curious, thinking, focus, resting, and sleepy.\n- State changes are triggered by conversation intent or user actions, not claims of medical or psychological emotion detection.\n- Each state maps to predefined LED colors, sounds, and optional bounded fin gestures.\n\n### 3. On-demand Vision & Contextual Help\n- Capture or analyze an image only after a user request or explicit interaction.\n- Optional future sensors (such as IMU or proximity) can detect pickup/tilt events locally.\n- No always-on recording or automatic media upload by default.\n\n### 4. Gentle Break Coach & Session Log\n- At the end of a focus session, Manta offers a short break reminder.\n- The phone can keep an opt-in daily session count and total focus minutes; no camera or audio recording is needed.\n- Future extension: user-selected goals and weekly progress summaries.\n\n## System overview
 
 ![Manta system architecture](assets/manta_architecture.svg)
 
@@ -99,7 +99,7 @@ The phone UI can call the same bridge actions. This keeps voice and touch contro
 
 ## Development status
 
-- [x] Manta concept, system architecture, and timer API specification
+- [x] Manta concept, system architecture infographic, and timer API specification\n- [x] Innovation design: Focus Flow, companion states, on-demand vision, and break coach
 - [x] Reference firmware timer state machine
 - [x] Skill/bridge timer commands
 - [ ] Verify board-specific camera, LED, servo, and audio adapters on hardware
