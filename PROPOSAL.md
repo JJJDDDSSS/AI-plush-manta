@@ -1,5 +1,8 @@
-# Proposal 文件入口
+# AI Plush Manta｜專題企劃入口
 
-本專案的正式 Manta 專題提案已統一整理於 [Proposal.md](Proposal.md)，避免大小寫不同造成兩份內容不一致。
+本專題已全面改以 **Manta（鬼蝠魟）毛絨玩偶**為產品主題，核心特色為本地 Focus Timer、語音互動、角色表情與按需視覺功能。
 
-系統技術架構與 API 細節請參閱 [Architecture.md](Architecture.md)。
+- [完整中文專題企劃書](Proposal.md)
+- [系統架構與 API 規格](Architecture.md)
+- [README／產品介紹](README.md)
+- [Manta Agent Skill](SKILL.md)
