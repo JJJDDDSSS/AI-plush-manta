@@ -1,136 +1,150 @@
-# Proposal — AI Plush Manta: 智慧鬼蝠魟陪伴與專注計時器
+# 專題企劃書｜AI Plush Manta 智慧鬼蝠魟玩偶與專注計時夥伴
 
-**Project type:** AIoT / Embedded AI / Interactive Plush Companion  
-**Platform:** AMB82-Mini + Android AI Edge Gallery / Gemma agent  
-**Status:** Design proposal and reference prototype
+**專題類型：** AIoT／嵌入式系統／邊緣 AI／互動式毛絨玩偶  
+**核心平台：** AMB82-Mini（RTL8735B）＋ Android AI Edge Gallery／Gemma  
+**主要創新：** Manta Focus Timer、Focus Flow、情境式互動與按需視覺辨識  
+**目前階段：** 設計提案與參考程式；硬體整合及實機測試尚待完成
 
-## 1. Abstract
+## 1. 專題摘要
 
-本專題提出一款以鬼蝠魟（Manta Ray）為造型的 AI 互動玩偶。系統結合 AMB82-Mini 嵌入式控制板與 Android 裝置上的 AI 模型，讓使用者能以自然語言與玩偶互動，並透過燈光、聲音及受限的動作回饋情緒。
+本專題設計一款以鬼蝠魟（Manta Ray）為造型的 AI 毛絨玩偶。玩偶以深藍色背部、白色腹部、寬大的胸鰭與柔軟外型作為角色識別，搭配攝影機、麥克風、LED、喇叭及可選的安全限位動作機構，呈現具有陪伴感的實體 AI 互動體驗。
 
-本專題的主要創新是 **Manta Focus Timer**。使用者可以用語音或手機介面設定倒數時間，Manta 會進入專注狀態，在時間結束時提供聲音與表情提醒。計時器由 AMB82-Mini 本地執行，不依賴 AI 持續運算，因此即使 AI 回應延遲，倒數仍可持續。
+系統採雙層架構：AMB82-Mini 負責裝置連線、感測器介接、燈光／聲音回饋與本地計時；Android 裝置執行 AI 模型、自然語言理解及工具呼叫。最重要的特色是 **Manta Focus Timer**：使用者能以語音或手機設定倒數、暫停、繼續及查詢剩餘時間。倒數由微控制器獨立執行，不依賴 AI 持續推理或網路連線。
 
-## 2. Motivation
+## 2. 設計動機與角色定位
 
-一般 AI 聊天機器人主要透過螢幕與使用者互動，缺少實體存在感；一般計時器則只提供數字倒數，互動較為單一。本專題希望結合柔軟玩偶的陪伴感、AI 的自然語言理解，以及嵌入式系統的即時控制，打造兼具互動性與實用性的桌上型智慧夥伴。
+一般聊天機器人主要存在於螢幕中，傳統計時器則缺少互動回饋。本專題將兩者結合，讓桌面上的 Manta 玩偶成為可對話、可表達狀態，也能協助使用者進行專注與休息安排的實體夥伴。
 
-鬼蝠魟具有寬大的胸鰭與流線外型，適合發展成療癒、友善的玩偶角色，也能將「展翼」的視覺概念延伸到專注模式與情緒燈效。
+選擇鬼蝠魟作為造型，是因為牠寬大的胸鰭與流線輪廓容易轉化成柔軟的毛絨玩偶；胸鰭也能延伸為角色表情與專注狀態的視覺語彙。設計重點不是把一般聊天機器人貼上魟魚外觀，而是讓玩偶造型、燈效、聲音與計時功能形成一致的產品體驗。
 
-## 3. Objectives
+## 3. 專題目標
 
 1. 建立 Android AI host 與 AMB82-Mini 之間的 Wi-Fi 通訊。
-2. 設計安全、精簡的 HTTP/JSON 裝置 API。
-3. 提供視覺觀察、狀態查詢、聲音播放及情緒表達等互動能力。
-4. 開發本地倒數計時器，支援開始、暫停、繼續、停止與剩餘時間查詢。
-5. 讓使用者可透過自然語言或手機介面操作計時器。
-6. 將隱私、安全、可測試性納入系統設計。
+2. 設計精簡且具參數驗證的 HTTP／JSON 裝置 API。
+3. 完成 Manta 角色狀態、燈光與音效回饋的控制介面。
+4. 建立不依賴 AI 推理的本地倒數計時器。
+5. 支援語音與手機雙介面操作，讓兩者使用同一套語意 API。
+6. 以按需影像擷取、明確感測器狀態指示及選擇性紀錄降低隱私風險。
 
-## 4. Proposed innovations
+## 4. 創新功能
 
-### 4.1 Manta Focus Timer — 核心創新
+### 4.1 Manta Focus Timer｜核心功能
+- 以自然語言設定 1–180 分鐘倒數。
+- 支援開始、暫停、繼續、停止及查詢剩餘時間。
+- 專注期間顯示 focus 表情／燈效。
+- 倒數完成時播放提示音並顯示完成表情。
+- 計時由 AMB82-Mini 本地執行，AI 或 Wi-Fi 暫時中斷不會停止已啟動的倒數。
 
-- 語音設定：「Manta，幫我計時 25 分鐘。」
-- 手機介面設定時間與控制倒數。
-- 支援暫停、繼續、取消及查詢剩餘時間。
-- 計時期間切換成 focus 表情／燈效。
-- 時間結束時播放提醒音並切換成 happy 表情。
-- 倒數由 AMB82-Mini 本地時鐘執行，不因 AI 推理延遲而中斷。
+### 4.2 Focus Flow｜專注與休息循環
+- 提供可調整的專注／休息組合；示範預設為 25 分鐘專注、5 分鐘休息。
+- 每個階段使用不同燈效與提示音，讓使用者不用一直查看手機。
+- 專注結束後先詢問是否開始休息或下一輪，不會自行連續啟動計時。
 
-### 4.2 Emotion-aware Companion
+### 4.3 Manta Companion States｜角色互動狀態
+- 定義 happy、curious、thinking、focus、resting、sleepy 等有限狀態。
+- 以 LED、音效及可選的輕柔胸鰭動作表達狀態。
+- 狀態由對話情境或使用者操作觸發；不宣稱能準確讀取人的真實情緒。
 
-Manta 可依互動情境切換 happy、curious、thinking、sleepy、focus 等狀態，透過 LED 和預先定義的安全動作呈現回饋。
+### 4.4 On-demand Vision｜按需視覺辨識
+- 只有在使用者提出需求或明確觸發時才擷取影像。
+- 可用於辨識桌面物品或回答簡單環境問題。
+- 不預設持續拍攝、錄音或自動上傳影像。
 
-### 4.3 On-demand Vision
+### 4.5 Gentle Break Coach｜溫和休息提醒
+- 計時結束時提供喝水、伸展或短暫休息等一般提醒。
+- 提醒內容是生活輔助，不作健康診斷或心理狀態推測。
 
-使用者詢問周遭物品時，AI 才請求一次影像觀察；不預設持續拍攝或上傳影像，以降低隱私風險與網路負載。
+### 4.6 Opt-in Focus Journal｜選擇性專注紀錄
+- 手機端可選擇記錄完成次數、專注總分鐘數與自訂目標。
+- 預設不保存語音、照片或完整對話。
+- 使用者可關閉紀錄並清除已保存的統計資料。
 
-### 4.4 Dual interaction
+## 5. 使用情境
 
-同一組語意 API 同時支援 AI 語音互動與手機控制介面，避免兩套控制邏輯不一致。
-
-### 4.5 Focus Flow — 專注與休息循環\n\n除了單次倒數，Manta 可提供可自訂的專注／休息循環。預設示範為 25 分鐘專注、5 分鐘休息，但使用者可自行調整。每個階段以不同燈效與提示音呈現；是否開始下一輪由使用者確認，避免玩偶自行連續打擾。\n\n### 4.6 Gentle Break Coach — 溫和休息提醒\n\n計時結束後，Manta 提醒使用者起身、喝水或短暫休息。這是一般生活提醒，不進行健康診斷，也不推測使用者的心理或身體狀態。\n\n### 4.7 Opt-in Focus Journal — 專注紀錄\n\n手機端可選擇記錄每日完成次數、專注總分鐘數與自訂目標。預設只保存計時統計，不保存語音、照片或對話內容；使用者可關閉或清除紀錄。\n\n### 4.8 Context-aware Interaction — 情境互動\n\n以使用者明確指令、按鍵或可選的 IMU／接近感測器事件切換 curious、happy、focus、resting 等狀態。狀態是互動模式，不宣稱能準確判斷人的真實情緒。\n\n## 5. User scenarios
-
-**Scenario A — 專注計時**
-
+### 情境 A：語音啟動專注計時
 1. 使用者說：「Manta，幫我計時 25 分鐘。」
 2. Android AI 解析時間並呼叫 `timer_start(25)`。
-3. AMB82-Mini 開始本地倒數，Manta 進入 focus 狀態。
-4. 使用者可問：「還剩多久？」AI 呼叫 `timer_status()`。
-5. 倒數歸零，Manta 播放提醒音並顯示完成表情。
+3. AMB82-Mini 啟動本地倒數，玩偶進入 focus 狀態。
+4. 使用者可問：「還剩多久？」系統呼叫 `timer_status()`。
+5. 倒數歸零後，玩偶播放提醒音並顯示完成表情。
 
-**Scenario B — 暫停與繼續**
+### 情境 B：暫停與繼續
+使用者說「先暫停」或「繼續計時」，系統分別呼叫 `timer_pause()` 或 `timer_resume()`，並依裝置回傳狀態向使用者確認。
 
-使用者說：「先暫停」或「繼續計時」，AI 分別呼叫 `timer_pause()` 或 `timer_resume()`。裝置回傳最新狀態供 AI 確認。
+### 情境 C：按需視覺互動
+使用者問：「桌上有什麼？」AI 在取得明確請求後呼叫 `look()`，取得單次觀察結果，再以自然語言回覆。
 
-**Scenario C — 視覺互動**
+### 情境 D：專注與休息循環
+使用者選擇 25／5 模式。專注結束後 Manta 提醒休息，並詢問是否開始下一階段；只有在使用者確認後才啟動。
 
-使用者問：「我桌上有什麼？」AI 呼叫 `look()`，取得一次感測結果後再以自然語言回答。
+## 6. 系統架構
 
-**Scenario D — 專注與休息循環**\n\n使用者選擇 25/5 模式。專注結束時 Manta 提醒休息，詢問是否開始下一輪；只有使用者同意後才啟動下一次倒數。\n\n**Scenario E — 每日專注紀錄**\n\n使用者可在手機查看今日完成幾輪與累積專注分鐘數。此功能只需保存計時統計，無需保存媒體。\n\n## 6. System architecture
+完整架構請參閱 [Architecture.md](Architecture.md) 與 [Manta 系統總覽圖](assets/manta_system_overview.svg)。
 
-請參閱 [Architecture.md](Architecture.md)。整體採雙層架構：
+- **實體玩偶層：** Manta 毛絨外殼、攝影機、麥克風、LED、喇叭及可選限位動作機構。
+- **嵌入式控制層：** AMB82-Mini、Wi-Fi、HTTP API、本地 TimerEngine、感測器與周邊介接。
+- **AI 與應用層：** Android AI Edge Gallery、Gemma、Manta Skill、JavaScript bridge、手機控制介面。
+- **資料與隱私層：** 按需視覺、選擇性專注統計、不預設保存媒體。
 
-- **Embedded layer:** AMB82-Mini、TimerEngine、Wi-Fi API、camera/peripheral adapters、LED/audio/motion control。
-- **AI layer:** Android AI Edge Gallery、Gemma、Manta Skill、JavaScript bridge。
+## 7. 硬體與軟體規劃
 
-## 7. Hardware and software
-
-| Item | Purpose |
-|---|---|
-| AMB82-Mini | 主控制器、Wi-Fi、相機／麥克風能力（依板型確認） |
-| Camera | 按需影像擷取 |
-| Speaker + compatible amplifier | 語音或提醒音效 |
-| RGB LED | 情緒與專注狀態顯示 |
-| Optional guarded actuator | 鰭部或身體的有限度動作 |
-| Android phone/tablet | AI 推理與語音介面 |
-| Arduino-compatible firmware | 裝置 API 與本地計時器 |
-| JavaScript Skill bridge | Agent 指令驗證與 HTTP 呼叫 |
-
-實際接線需依 AMB82-Mini 板型、電壓、電流與周邊模組規格確認；目前韌體中的相機、LED、伺服與音訊部分屬於硬體介接預留區。
-
-## 8. Timer API
-
-| Function | Input | Description |
+| 項目 | 用途 | 狀態 |
 |---|---|---|
-| `timer_start(minutes)` | 1–180 | 開始倒數 |
-| `timer_pause()` | — | 暫停 |
-| `timer_resume()` | — | 繼續 |
-| `timer_stop()` | — | 停止並清除 |
-| `timer_status()` | — | 查詢狀態與剩餘秒數 |
+| Manta 毛絨玩偶外殼 | 實體角色與內部模組保護 | 概念設計 |
+| AMB82-Mini（RTL8735B） | 主控制器、Wi-Fi、裝置 API | 參考平台，需確認板型 |
+| Camera | 按需影像擷取 | 待整合 |
+| Microphone | 語音輸入 | 依選定音訊路徑整合 |
+| Speaker／amplifier | 提示音與語音播放 | 待整合 |
+| RGB LED | 角色表情與計時狀態 | 待整合 |
+| Optional guarded actuator | 胸鰭或身體的有限度動作 | 選配、需機構限位 |
+| Android phone／tablet | AI 推理與操作介面 | AI host |
+| Gemma／AI Edge Gallery | 自然語言理解與工具呼叫 | 需依 App 版本驗證 |
+| JavaScript bridge | 驗證指令並呼叫裝置 API | 參考程式 |
 
-Timer state: `idle → running ↔ paused → completed`.
+實際接線前必須確認 AMB82-Mini 板型、腳位、電壓、電流預算與模組相容性。相機、LED、伺服與音訊目前仍需依實際硬體完成介接，不應視為已經通過實機驗證。
 
-本階段使用 AMB82 的單調計時來源，裝置斷電或重開機後不保留倒數；若未來需要跨斷電恢復，可再加入 RTC 或持久化截止時間。
+## 8. Timer API 規格
 
-## 9. Evaluation plan
+| Agent 工具 | 裝置端點 | 功能 |
+|---|---|---|
+| `timer_start(minutes)` | `/timer/start?minutes=N` | 開始 1–180 分鐘倒數 |
+| `timer_pause()` | `/timer/pause` | 暫停 |
+| `timer_resume()` | `/timer/resume` | 繼續 |
+| `timer_stop()` | `/timer/stop` | 停止並清除 |
+| `timer_status()` | `/timer/status` | 查詢狀態與剩餘秒數 |
 
-- API 正確性：五種計時操作是否回傳正確狀態。
-- 計時準確度：比較裝置倒數與標準時鐘的誤差。
-- AI 操作成功率：測試不同自然語言說法能否正確轉成工具呼叫。
-- 韌體可靠度：測試 Wi-Fi 中斷、重連及無效參數。
-- 使用體驗：觀察使用者是否能理解專注中、暫停、休息及完成狀態。\n- 休息循環：確認專注結束後只提示，不會未經確認自動開始下一輪。\n- 紀錄隱私：確認只記錄選擇保存的計時統計，且可關閉／清除。
-- 隱私與安全：確認沒有未經請求的持續影像／音訊擷取，並驗證動作限制。
+計時狀態為 `idle → running ↔ paused → completed`。目前參考韌體使用本地單調計時來源；裝置斷電或重新啟動後不保留倒數，未來可評估 RTC 或持久化截止時間。
 
-## 10. Risks and mitigation
+## 9. 評估與測試計畫
 
-| Risk | Mitigation |
+- **API 正確性：** 驗證開始、暫停、繼續、停止、查詢五種操作。
+- **計時準確度：** 與標準時鐘比較倒數誤差。
+- **語意理解：** 測試不同自然語言表達能否轉成正確工具參數。
+- **連線可靠度：** 測試 Wi-Fi 中斷、重連、無效參數與逾時。
+- **互動體驗：** 確認使用者能理解專注、暫停、休息及完成狀態。
+- **隱私檢查：** 確認沒有未經請求的持續影像／音訊擷取。
+- **機構安全：** 驗證可動部件限位、停止機制及外殼固定。
+
+## 10. 風險與改善方式
+
+| 風險 | 改善方式 |
 |---|---|
-| AI 誤判時間 | 參數限制 1–180 分鐘；不清楚時先詢問 |
-| AI 或 Wi-Fi 暫時離線 | 已啟動的倒數由本地 TimerEngine 繼續 |
-| 計時器因阻塞程式碼停頓 | 使用非阻塞時間差計算，不使用長時間 delay |
-| 周邊硬體尚未確定 | 先完成 API 與模擬測試，再依板型接入 |
+| AI 解析錯誤時間 | 僅接受 1–180 整數分鐘；不清楚時先詢問 |
+| AI 或 Wi-Fi 暫時離線 | 已啟動倒數由本地 TimerEngine 繼續 |
+| 程式阻塞造成計時停頓 | 使用非阻塞時間差計算 |
+| 周邊硬體尚未確認 | 先完成 API 與模擬測試，再依板型介接 |
 | 相機／麥克風隱私 | 按需啟用、狀態指示、不預設儲存 |
-| 動作造成機構風險 | 限制動作範圍、速度與時間，並提供停止機制 |
+| 動作機構風險 | 限制行程與時間，提供停止機制並將機構固定於外殼內 |
 
-## 11. Development milestones
+## 11. 開發里程碑
 
-1. **M1 — Device foundation:** Wi-Fi、HTTP API、status。
-2. **M2 — Timer engine:** start/pause/resume/stop/status，完成邊界測試。
-3. **M3 — Agent integration:** Manta Skill 與 JavaScript bridge。
-4. **M4 — Feedback:** LED、聲音與完成提醒硬體介接。
-5. **M5 — Perception:** 相機按需觀察與感測器整合。
-6. **M6 — Demonstration:** 完整語音計時流程、測試紀錄與實體成品展示。
+1. **M1 裝置基礎：** Wi-Fi、HTTP API、status。
+2. **M2 計時核心：** 完成 start／pause／resume／stop／status 與邊界測試。
+3. **M3 AI 整合：** 串接 Manta Skill 與 JavaScript bridge。
+4. **M4 互動回饋：** 介接 LED、喇叭與完成提醒。
+5. **M5 感知功能：** 按需相機觀察與選配感測器。
+6. **M6 展示驗證：** 完成語音計時流程、測試紀錄與實體玩偶展示。
 
-## 12. Expected outcome
+## 12. 預期成果
 
-預期完成一款具備 AI 對話、基本環境觀察、情緒回饋及智慧計時功能的 Manta 互動玩偶原型。其差異化不只在於鬼蝠魟造型，而是新增一套由嵌入式裝置獨立執行、可由 AI 自然語言控制的專注計時服務。
+完成一款以鬼蝠魟為主題、具備 AI 對話、按需環境觀察、角色狀態回饋與本地專注計時功能的互動玩偶原型。專題的差異化在於將實體毛絨角色、邊緣 AI 與獨立運作的嵌入式計時服務整合，讓 Manta 不只是外觀可愛的玩偶，也是一個可透過語音與手機共同操作的智慧夥伴。
