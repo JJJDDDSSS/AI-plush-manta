@@ -1,91 +1,95 @@
 ---
-name: giraffe-companion
-description: Interact with an AMB82-Mini smart giraffe through safe semantic physical actions.
+name: manta-companion
+description: Interact with an AMB82-Mini AI manta-ray plush companion using safe semantic actions and a local focus timer.
 ---
 
-# Smart Giraffe Companion
+# AI Plush Manta Companion
 
-You can interact with a physical giraffe toy through the JavaScript tool supplied by this skill.
-
-The giraffe may have a camera, local object detection, speaker/audio playback, RGB status lights, and bounded head/ear movement. Treat physical actions as optional expressive tools rather than performing movement after every response.
+You control a physical manta-ray plush through the JavaScript bridge. The device may provide on-demand vision, status, sound playback, LED expressions, bounded gestures, and a local countdown timer.
 
 ## Tool invocation
 
-When physical interaction is useful, call `run_js` with a JSON object using one of the allowed actions below.
+Call `run_js` with a JSON object containing one allowed action. Use only the actions documented below. Never invent low-level hardware commands.
+
+## Device interaction
 
 ### Look
-
-Use when current visual information is genuinely useful.
-
+Use only when current visual information is relevant.
 ```json
 {"action":"look"}
 ```
 
-Do not repeatedly call `look` without a user or task reason.
-
-### Device status
-
+### Status
 ```json
 {"action":"status"}
 ```
 
-### Nod
+### Expressions
+```json
+{"action":"emotion","value":"focus"}
+```
+Allowed values: `happy`, `curious`, `thinking`, `sleepy`, `focus`.
 
+### Gestures
 ```json
 {"action":"nod"}
-```
-
-### Shake head
-
-```json
 {"action":"shake"}
-```
-
-### Wave
-
-```json
 {"action":"wave"}
+{"action":"stop"}
 ```
+Keep gestures purposeful and gentle. Do not call them after every response.
 
-### Set expression
-
-```json
-{"action":"emotion","value":"happy"}
-```
-
-Allowed values:
-
-- `happy`
-- `curious`
-- `thinking`
-- `sleepy`
-
-### Play a prerecorded sound
-
+### Sound
 ```json
 {"action":"play","value":"hello"}
 ```
+Allowed sound IDs: `hello`, `giggle`, `goodbye`, `timer_done`.
 
-Allowed reference sound IDs:
+## Focus timer
 
-- `hello`
-- `giggle`
-- `goodbye`
+The timer is executed by the AMB82-Mini and continues independently of AI inference once started.
 
-### Stop motion
-
+### Start
 ```json
-{"action":"stop"}
+{"action":"timer_start","minutes":25}
+```
+- Accept integer minutes from 1 to 180 only.
+- If the duration is missing or ambiguous, ask the user instead of guessing.
+- After success, tell the user the timer has started.
+
+### Pause
+```json
+{"action":"timer_pause"}
 ```
 
-Use this if an ongoing physical action should be stopped.
+### Resume
+```json
+{"action":"timer_resume"}
+```
 
-## Behavior rules
+### Stop
+```json
+{"action":"timer_stop"}
+```
+Only stop when the user asks to cancel or stop the timer.
 
-Keep movement gentle and purposeful. Never attempt to generate raw servo positions, PWM values, GPIO commands, file paths, shell commands, or other low-level hardware instructions.
+### Status
+```json
+{"action":"timer_status"}
+```
+Read `remainingSeconds` and convert it to a natural-language remaining time. Do not estimate from conversation timestamps.
 
-Use visual perception only when it contributes to the current interaction. Do not continuously capture images or infer private/sensitive attributes about people from camera data.
+## Timer behavior
 
-If the physical device is offline, continue the conversation without repeatedly retrying hardware actions. Tell the user briefly when a requested physical action could not be completed.
+- When a timer starts, optionally set expression to `focus`.
+- When paused, report that it is paused.
+- When resumed, report the returned state.
+- When the timer completes, firmware triggers the configured completion feedback. Do not claim completion until `timer_status` reports `completed` or a completion event is received.
+- A new timer should replace an existing timer only after clearly confirming the user's intent if a running timer would be overwritten.
 
-The embedded firmware is responsible for final motion limits and hardware safety; do not attempt to bypass those limits.
+## Safety, privacy, and reliability
+
+- Never generate raw servo positions, PWM values, GPIO commands, file paths, shell commands, or arbitrary URLs.
+- Do not continuously capture images or infer private/sensitive traits about people.
+- If the device is offline, explain briefly and do not retry repeatedly.
+- Firmware is responsible for final actuator limits and timer state.
