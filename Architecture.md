@@ -63,7 +63,15 @@ Do not assume every optional peripheral is present. Confirm the exact AMB82-Mini
 - The JavaScript bridge validates arguments and translates actions to HTTP requests.
 - AI inference is not part of the timer clock. A running countdown continues even when the model is busy.
 
-### 4.3 Innovation services\n\n- `FocusFlow`: optional focus/rest cycle coordinator; asks before starting another round.\n- `CompanionState`: maps explicit interaction events to a finite set of states (`happy`, `curious`, `thinking`, `focus`, `resting`, `sleepy`). These are presentation states, not inferred diagnoses.\n- `BreakCoach`: offers a gentle break prompt after a completed session.\n- `FocusJournal` (phone-side, opt-in): stores session count and total focus minutes only; it does not need media or conversation transcripts.\n- `OnDemandVision`: performs a single capture only after a user request or explicit interaction.\n\n## 5. Timer state machine
+### 4.3 Innovation services
+
+- `FocusFlow`: optional focus/rest cycle coordinator; asks before starting another round.
+- `CompanionState`: maps explicit interaction events to a finite set of states (`happy`, `curious`, `thinking`, `focus`, `resting`, `sleepy`). These are presentation states, not inferred diagnoses.
+- `BreakCoach`: offers a gentle break prompt after a completed session.
+- `FocusJournal` (phone-side, opt-in): stores session count and total focus minutes only; it does not need media or conversation transcripts.
+- `OnDemandVision`: performs a single capture only after a user request or explicit interaction.
+
+## 5. Timer state machine
 
 ![Manta timer flow](assets/manta_timer_flow.svg)
 
@@ -133,7 +141,9 @@ For ambiguous requests such as “set a timer for a while,” ask the user for t
 
 ## 8. Privacy, reliability, and safety
 
-- Do not continuously capture or upload camera/microphone data by default; vision is on-demand.\n- Treat companion moods as selectable interaction states; do not claim reliable emotion or health inference.\n- Focus history is opt-in and limited to session statistics; provide a clear way to disable and clear it.
+- Do not continuously capture or upload camera/microphone data by default; vision is on-demand.
+- Treat companion moods as selectable interaction states; do not claim reliable emotion or health inference.
+- Focus history is opt-in and limited to session statistics; provide a clear way to disable and clear it.
 - Show a visible indicator whenever camera or microphone capture is active.
 - Do not store media by default; provide clear user controls for capture and deletion.
 - Keep GPIO/PWM and raw servo values inaccessible to the AI.
