@@ -6,13 +6,15 @@ AI Plush Manta 將 **AMB82-Mini 實體控制器**與 Android 裝置上的 **Goog
 
 ## Product concept
 
-![AI Plush Manta product concept](assets/manta_product_concept.svg)
+![AI Plush Manta product concept](https://raw.githubusercontent.com/JJJDDDSSS/AI-plush-manta/manta/timer-proposal-2026/assets/manta_product_concept.svg)
 
 *Manta plush product concept illustration.*
 
 ### Complete system overview
 
-![AI Manta system overview infographic](assets/manta_system_overview.svg)
+![AI Manta system overview infographic](https://raw.githubusercontent.com/JJJDDDSSS/AI-plush-manta/manta/timer-proposal-2026/assets/manta_system_overview.svg)
+
+[若圖片未顯示，點此直接開啟完整系統架構圖](https://github.com/JJJDDDSSS/AI-plush-manta/blob/manta/timer-proposal-2026/assets/manta_system_overview.svg)
 
 ## Highlights
 
@@ -48,7 +50,7 @@ AI Plush Manta 將 **AMB82-Mini 實體控制器**與 Android 裝置上的 **Goog
 
 ## System overview
 
-![Manta system architecture](assets/manta_architecture.svg)
+![Manta system architecture](https://raw.githubusercontent.com/JJJDDDSSS/AI-plush-manta/manta/timer-proposal-2026/assets/manta_architecture.svg)
 
 | Layer | Responsibility |
 |---|---|
