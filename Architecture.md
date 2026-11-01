@@ -1,188 +1,154 @@
-# AMB82-Mini + Google AI Edge Gallery Smart Giraffe
+# AI Plush Manta — System Architecture
 
-## Project proposal
+## 1. Design goal
 
-The recommended architecture is to make the **AMB82-Mini the giraffe's embodied hardware controller**, while **Google AI Edge Gallery on an Android device provides the higher-level agent/reasoning layer**. Rather than putting a full MCP implementation and a large language model on the microcontroller, the AMB82 exposes a small semantic JSON/HTTP API for perception and physical actions.
+AI Plush Manta is a manta-ray-shaped interactive plush companion. The architecture separates **deterministic embedded control** from **AI reasoning**:
 
-```text
-                   SMART GIRAFFE
- ┌────────────────────────────────────────────┐
- │                AMB82-Mini                  │
- │                                            │
- │ Camera ──> local vision ──> perception     │
- │ Mic ─────> audio/event detection           │
- │                                            │
- │              Giraffe Agent API             │
- │        HTTP/WebSocket JSON interface       │
- │                    │                       │
- │       ┌────────────┼────────────┐          │
- │       ▼            ▼            ▼          │
- │    Speaker       Servos        LEDs         │
- │   / playback   head / ears   expression     │
- └────────────────────┬───────────────────────┘
-                      │ Wi-Fi
-                      │
-              Android phone/tablet
- ┌────────────────────▼───────────────────────┐
- │          Google AI Edge Gallery            │
- │                                            │
- │        on-device model / agent             │
- │                 │                          │
- │         Giraffe Agent Skill                │
- │                 │                          │
- │        JS Skill / MCP ecosystem            │
- │                 │                          │
- │       ┌─────────┼─────────┐                │
- │       ▼         ▼         ▼                │
- │     look()    emotion()   move()            │
- │     status()  play()      etc.              │
- └────────────────────────────────────────────┘
+- **AMB82-Mini:** device connectivity, timer engine, sensor/peripheral adapters, and safe physical actions.
+- **Android AI host:** Gemma model inference, conversation, speech interface, and agent/tool orchestration.
+- **JavaScript bridge:** validates a small set of semantic actions and calls the device HTTP API.
+
+The microcontroller does not host the large language model. The AI never receives arbitrary GPIO, PWM, servo-angle, or file-system access.
+
+## 2. System architecture
+
+![AI Plush Manta architecture](assets/manta_architecture.svg)
+
+```mermaid
+flowchart TB
+  U[User: voice or phone UI] --> A[Android AI Edge Gallery / Agent]
+  A <--> L[Gemma on-device model]
+  A --> S[Manta Skill / Tool Dispatcher]
+  S --> B[JavaScript Bridge]
+  B <-->|Wi-Fi HTTP JSON| M[AMB82-Mini]
+  M --> T[Local Timer Engine]
+  M --> C[Camera / perception adapter]
+  M --> I[Optional IR + IMU sensors]
+  M --> E[LED expression adapter]
+  M --> SP[Speaker / audio adapter]
+  M --> AC[Bounded actuator adapter]
+  T -->|complete event| E
+  T -->|completion sound| SP
 ```
 
-## Why use a small hardware API?
+## 3. Hardware responsibilities
 
-MCP is most useful at the agent/tool integration layer. The AMB82 should remain responsible for deterministic embedded functions: camera inference, GPIO/PWM, audio playback, LEDs, sensor events, and motion safety. A compact HTTP/JSON API is easier to debug, uses less RAM/flash, and prevents the language model from directly commanding low-level PWM or GPIO values.
+| Module | Responsibility | Implementation status |
+|---|---|---|
+| AMB82-Mini | Main embedded controller and Wi-Fi API | Reference firmware |
+| Camera | On-demand image capture / local perception | Adapter placeholder; board-specific integration required |
+| Microphone | Voice capture, if supported by chosen audio path | Hardware/app integration required |
+| Speaker + amplifier | Sound effects and timer completion notification | Adapter placeholder |
+| RGB LED | Happy, curious, thinking, focus, and completion states | Adapter placeholder |
+| Optional servo/fin mechanism | Gentle expressive motion | Adapter placeholder; guarded movement only |
+| Optional IR / IMU | Proximity, pickup, and tilt events | Optional future integration |
+| Android phone/tablet | AI inference, speech, and agent logic | External AI host |
 
-The agent should therefore request semantic actions such as:
+Do not assume every optional peripheral is present. Confirm the exact AMB82-Mini revision, pin mapping, voltage levels, current budget, and supported libraries before wiring.
 
-```text
-giraffe.look()
-giraffe.nod()
-giraffe.shake_head()
-giraffe.wave()
-giraffe.set_emotion("happy")
-giraffe.play_sound("hello")
-giraffe.status()
+## 4. Software modules
+
+### 4.1 Embedded firmware
+- `NetworkService`: Wi-Fi connection and HTTP request handling.
+- `DeviceAPI`: semantic endpoints such as `/look`, `/emotion/happy`, and timer operations.
+- `TimerEngine`: non-blocking countdown based on `millis()`; supports running, paused, idle, and completed states.
+- `PerceptionAdapter`: camera capture and optional local detection.
+- `ExpressionAdapter`: LED patterns and bounded gestures.
+- `AudioAdapter`: whitelisted sound playback.
+- `SafetyController`: action limits and safe fallback behavior.
+
+### 4.2 Android AI host
+- Gemma model performs language understanding and response generation.
+- Manta Skill maps natural-language intents to approved semantic actions.
+- The JavaScript bridge validates arguments and translates actions to HTTP requests.
+- AI inference is not part of the timer clock. A running countdown continues even when the model is busy.
+
+## 5. Timer state machine
+
+![Manta timer flow](assets/manta_timer_flow.svg)
+
+```mermaid
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> Running: timer_start(minutes)
+  Running --> Paused: timer_pause()
+  Paused --> Running: timer_resume()
+  Running --> Idle: timer_stop()
+  Paused --> Idle: timer_stop()
+  Running --> Completed: remaining time = 0
+  Completed --> Idle: acknowledge / next timer
 ```
 
-Do **not** expose low-level commands such as arbitrary servo angles, raw PWM duty cycles, or unrestricted GPIO writes to the agent.
+The timer uses elapsed monotonic milliseconds rather than repeated blocking delays. When paused, the remaining duration is saved. On resume, a new start timestamp is recorded. On completion, the firmware emits a one-shot notification and changes the expression to happy.
 
-## Two-level AI design
+**Limit:** a `millis()`-based timer runs while the board remains powered. Persistence across reset or power loss is not included in this prototype; it can be added later using a real-time clock or persisted deadline.
 
-```text
-       Fast / reactive                    Cognitive
-       AMB82-Mini                         Android device
+## 6. HTTP API contract
 
-       local object detection             reasoning
-       gesture/event detection            conversation
-       camera capture                     agent skills
-       LEDs / audio / servos              MCP integrations
-       safety interlocks                  planning
-```
+All endpoints return JSON with an `ok` field. The prototype uses GET for compatibility with the original example; a production implementation should use POST for state-changing operations and add authentication.
 
-The AMB82 can turn continuous sensor streams into compact events. For example:
+| Method | Endpoint | Parameters | Result |
+|---|---|---|---|
+| GET | `/status` | — | Device state |
+| GET | `/look` | — | On-demand perception result |
+| GET | `/nod`, `/shake`, `/wave` | — | Bounded gesture request |
+| GET | `/emotion/{value}` | happy/curious/thinking/sleepy/focus | Set expression |
+| GET | `/play/{sound}` | hello/giggle/goodbye/timer_done | Play whitelisted sound |
+| GET | `/timer/start?minutes=N` | integer 1–180 | Start countdown |
+| GET | `/timer/pause` | — | Pause |
+| GET | `/timer/resume` | — | Resume |
+| GET | `/timer/stop` | — | Stop and clear |
+| GET | `/timer/status` | — | state, remainingSeconds |
+
+Example timer status:
 
 ```json
 {
-  "event": "object_detected",
-  "objects": [
-    {"class": "person", "confidence": 0.96},
-    {"class": "book", "confidence": 0.88}
-  ]
+  "ok": true,
+  "timer": {
+    "state": "running",
+    "remainingSeconds": 1240
+  }
 }
 ```
 
-This event-driven approach avoids continuously sending camera frames to the phone.
+## 7. Agent tool schema
 
-## Recommended first six tools
+The agent should expose only these semantic operations:
 
-| Tool | AMB82 role | Agent purpose |
+| Tool | Input | Behavior |
 |---|---|---|
-| `look()` | Camera + local detector | Understand surroundings |
-| `nod()` | Servo animation | Positive physical response |
-| `shake()` | Servo animation | Negative physical response |
-| `emotion()` | LED + bounded motion | Express state |
-| `play()` | microSD/audio playback | Sounds or prerecorded speech |
-| `status()` | Device telemetry | Check device state |
+| `look` | none | Request one observation when useful |
+| `status` | none | Query device health |
+| `emotion` | approved emotion | Change expression |
+| `play` | approved sound ID | Play a known sound |
+| `nod`, `shake`, `wave`, `stop` | none | Bounded gesture / stop |
+| `timer_start` | `minutes: 1..180` | Start countdown |
+| `timer_pause` | none | Pause |
+| `timer_resume` | none | Resume |
+| `timer_stop` | none | Clear timer |
+| `timer_status` | none | Read remaining time |
 
-## Example interaction
+For ambiguous requests such as “set a timer for a while,” ask the user for the duration instead of guessing.
 
-```text
-User: "What am I holding?"
+## 8. Privacy, reliability, and safety
 
-Agent -> look()
-AMB82 -> {"objects":[{"label":"book","confidence":0.88}]}
-Agent -> formulates an answer
-Agent -> emotion("happy")
-Agent -> nod()
-Phone/TTS or toy audio -> "It looks like a book."
-```
+- Do not continuously capture or upload camera/microphone data by default.
+- Show a visible indicator whenever camera or microphone capture is active.
+- Do not store media by default; provide clear user controls for capture and deletion.
+- Keep GPIO/PWM and raw servo values inaccessible to the AI.
+- Bound all motion in firmware and stop motion on timeout or connectivity failure.
+- Keep batteries, wiring, and rigid mechanisms in a secure enclosure away from the plush surface.
+- The timer must be independent of AI availability once started.
+- Use a physical power switch and hardware sensor-disable controls where feasible.
+- Treat this as an engineering prototype, not a certified consumer toy.
 
-## Firmware/API design
+## 9. Implementation sequence
 
-The reference firmware in `GiraffeAgent.ino` exposes endpoints such as:
-
-```text
-GET /status
-GET /look
-GET /nod
-GET /shake
-GET /wave
-GET /emotion/happy
-GET /emotion/curious
-GET /emotion/thinking
-GET /emotion/sleepy
-GET /play/hello
-```
-
-The supplied implementation intentionally contains adapter functions for camera inference, servo control, LEDs, and audio. Replace those adapters with the APIs appropriate to the exact AMB82-Mini board package and peripherals used in the build.
-
-## AI Edge Gallery Skill
-
-The reference `SKILL.md` gives the model a deliberately small physical-action vocabulary. `scripts/index.html` acts as the bridge between the Skill and the AMB82 HTTP API.
-
-The bridge validates actions before sending them to the toy. This is an important design property: model output is never translated into unrestricted hardware access.
-
-## Version 2: events
-
-After command/control is stable, add an event channel, for example:
-
-```text
-ws://giraffe.local/events
-```
-
-Possible events:
-
-```json
-{"event":"person_detected"}
-{"event":"wave_detected"}
-{"event":"button_pressed"}
-{"event":"picked_up"}
-{"event":"object_detected","object":"book"}
-```
-
-This allows the physical toy to initiate interactions without constant polling.
-
-## Safety and privacy
-
-- Enforce servo travel, speed, and timeout limits in firmware, not in prompts.
-- Never expose arbitrary GPIO/PWM control to the language model.
-- Keep moving linkages, batteries, and rigid parts inaccessible through the plush exterior.
-- Use visible indicators for camera/microphone/network activity.
-- Avoid continuous audio/video upload; perform local event detection where practical.
-- Do not store images/audio by default.
-- Provide a physical power switch and preferably hardware camera/microphone disable controls.
-- Validate power supply current and peripheral voltage compatibility before assembly.
-- Treat a modified plush as an engineering prototype unless it has undergone applicable toy/product safety testing.
-
-## Suggested implementation order
-
-1. Bring up Wi-Fi and `/status`.
-2. Implement bounded LED expressions.
-3. Implement one servo and `/nod` with hard travel limits.
-4. Add camera capture/local detection and `/look`.
-5. Add microSD/audio playback and `/play`.
-6. Install the AI Edge Gallery Skill and test the JavaScript bridge.
-7. Add event-driven perception only after command/control is reliable.
-8. Add richer STT/TTS/MCP integrations at the Android agent layer.
-
-## Repository layout
-
-```text
-giraffe-agent/
-├── PROPOSAL.md
-├── GiraffeAgent.ino
-├── SKILL.md
-└── scripts/
-    └── index.html
-```
+1. Verify board, power, Wi-Fi, and `/status`.
+2. Test timer start/pause/resume/stop/status without AI.
+3. Connect the Skill bridge and validate tool arguments.
+4. Integrate LED and speaker adapters; verify timer completion feedback.
+5. Integrate camera and optional sensors on demand.
+6. Test Android speech interaction and failure recovery.
+7. Document measured latency, runtime, and power consumption.
