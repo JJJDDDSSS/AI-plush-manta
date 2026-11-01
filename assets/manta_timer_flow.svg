@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="420" viewBox="0 0 1100 420">
+<rect width="1100" height="420" rx="24" fill="#f5f8fc"/><text x="550" y="55" text-anchor="middle" font-family="Arial" font-size="30" font-weight="bold" fill="#12334d">Manta Focus Timer — State Flow</text>
+<g font-family="Arial" text-anchor="middle" fill="#12334d"><rect x="55" y="160" width="150" height="90" rx="18" fill="#e5eef7" stroke="#467b9d" stroke-width="3"/><text x="130" y="213" font-size="24">Idle</text>
+<rect x="300" y="160" width="170" height="90" rx="18" fill="#dff3ee" stroke="#36917b" stroke-width="3"/><text x="385" y="213" font-size="24">Running</text>
+<rect x="575" y="160" width="170" height="90" rx="18" fill="#fff1d9" stroke="#c28b34" stroke-width="3"/><text x="660" y="213" font-size="24">Paused</text>
+<rect x="850" y="160" width="195" height="90" rx="18" fill="#e9e4fb" stroke="#7964b8" stroke-width="3"/><text x="947" y="213" font-size="24">Completed</text></g>
+<g stroke="#45677d" stroke-width="3" fill="none"><path d="M205 205 H300 M470 185 H575 M575 225 H470 M745 205 H850 M385 160 V105 H130 V160 M660 250 V315 H130 V250"/></g>
+<g font-family="Arial" font-size="17" fill="#345" text-anchor="middle"><text x="250" y="190">start</text><text x="520" y="165">pause</text><text x="520" y="250">resume</text><text x="800" y="190">time = 0</text><text x="255" y="95">stop / reset</text><text x="395" y="345">stop / reset</text></g>
+</svg>

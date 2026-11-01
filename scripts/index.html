@@ -3,42 +3,34 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Giraffe Companion Skill Bridge</title>
+  <title>Manta Companion Skill Bridge</title>
 </head>
 <body>
 <script>
 /*
- * Google AI Edge Gallery Skill -> AMB82-Mini bridge.
- *
- * Change this address to the AMB82-Mini's LAN address.
- * A fixed DHCP lease is convenient during development.
+ * Manta AI Skill -> AMB82-Mini bridge.
+ * Set this to the board's LAN address before testing.
  */
-const GIRAFFE_BASE_URL = "http://192.168.1.82:8080";
-const REQUEST_TIMEOUT_MS = 4000;
+const MANTA_BASE_URL = "http://192.168.1.82:8080";
+const REQUEST_TIMEOUT_MS = 5000;
 
 const ALLOWED_EMOTIONS = new Set([
-  "happy", "curious", "thinking", "sleepy"
+  "happy", "curious", "thinking", "sleepy", "focus"
 ]);
-
 const ALLOWED_SOUNDS = new Set([
-  "hello", "giggle", "goodbye"
+  "hello", "giggle", "goodbye", "timer_done"
 ]);
 
-async function giraffeGet(path) {
+async function mantaGet(path) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
   try {
-    const response = await fetch(GIRAFFE_BASE_URL + path, {
+    const response = await fetch(MANTA_BASE_URL + path, {
       method: "GET",
       cache: "no-store",
       signal: controller.signal
     });
-
-    if (!response.ok) {
-      throw new Error(`Giraffe returned HTTP ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`Manta returned HTTP ${response.status}`);
     return await response.json();
   } finally {
     clearTimeout(timeout);
@@ -47,64 +39,52 @@ async function giraffeGet(path) {
 
 function parseCommand(data) {
   const cmd = typeof data === "string" ? JSON.parse(data) : data;
-
   if (!cmd || typeof cmd !== "object" || Array.isArray(cmd)) {
     throw new Error("Command must be a JSON object");
   }
-
-  if (typeof cmd.action !== "string") {
-    throw new Error("Missing action");
-  }
-
+  if (typeof cmd.action !== "string") throw new Error("Missing action");
   return cmd;
 }
 
 async function executeCommand(cmd) {
   switch (cmd.action) {
-    case "look":
-      return giraffeGet("/look");
-
-    case "status":
-      return giraffeGet("/status");
-
-    case "nod":
-      return giraffeGet("/nod");
-
-    case "shake":
-      return giraffeGet("/shake");
-
-    case "wave":
-      return giraffeGet("/wave");
-
-    case "stop":
-      return giraffeGet("/stop");
+    case "look": return mantaGet("/look");
+    case "status": return mantaGet("/status");
+    case "nod": return mantaGet("/nod");
+    case "shake": return mantaGet("/shake");
+    case "wave": return mantaGet("/wave");
+    case "stop": return mantaGet("/stop");
 
     case "emotion": {
       const value = String(cmd.value || "");
-      if (!ALLOWED_EMOTIONS.has(value)) {
-        throw new Error("Unsupported emotion");
-      }
-      return giraffeGet("/emotion/" + encodeURIComponent(value));
+      if (!ALLOWED_EMOTIONS.has(value)) throw new Error("Unsupported emotion");
+      return mantaGet("/emotion/" + encodeURIComponent(value));
     }
 
     case "play": {
       const value = String(cmd.value || "");
-      if (!ALLOWED_SOUNDS.has(value)) {
-        throw new Error("Unsupported sound");
-      }
-      return giraffeGet("/play/" + encodeURIComponent(value));
+      if (!ALLOWED_SOUNDS.has(value)) throw new Error("Unsupported sound");
+      return mantaGet("/play/" + encodeURIComponent(value));
     }
 
-    default:
-      throw new Error("Unknown giraffe action");
+    case "timer_start": {
+      const minutes = Number(cmd.minutes);
+      if (!Number.isInteger(minutes) || minutes < 1 || minutes > 180) {
+        throw new Error("Timer duration must be an integer from 1 to 180 minutes");
+      }
+      return mantaGet("/timer/start?minutes=" + encodeURIComponent(minutes));
+    }
+
+    case "timer_pause": return mantaGet("/timer/pause");
+    case "timer_resume": return mantaGet("/timer/resume");
+    case "timer_stop": return mantaGet("/timer/stop");
+    case "timer_status": return mantaGet("/timer/status");
+
+    default: throw new Error("Unknown Manta action");
   }
 }
 
-/*
- * Entry point used by the AI Edge Gallery JavaScript Skill environment.
- * It always returns a JSON string so errors are visible to the agent
- * without exposing stack traces or internal browser details.
- */
+/* Entry point used by the AI Edge Gallery JavaScript Skill environment. */
 window.ai_edge_gallery_get_result = async function(data) {
   try {
     const cmd = parseCommand(data);
@@ -112,9 +92,8 @@ window.ai_edge_gallery_get_result = async function(data) {
     return JSON.stringify({ ok: true, result });
   } catch (error) {
     const message = error && error.name === "AbortError"
-      ? "Giraffe request timed out"
+      ? "Manta request timed out"
       : String(error && error.message ? error.message : error);
-
     return JSON.stringify({ ok: false, error: message });
   }
 };

@@ -1,91 +1,98 @@
 ---
-name: giraffe-companion
-description: Interact with an AMB82-Mini smart giraffe through safe semantic physical actions.
+name: manta-companion
+description: Control an AI manta-ray plush companion using safe semantic actions, expressive feedback, and a local focus timer.
 ---
 
-# Smart Giraffe Companion
+# AI Plush Manta Companion
 
-You can interact with a physical giraffe toy through the JavaScript tool supplied by this skill.
-
-The giraffe may have a camera, local object detection, speaker/audio playback, RGB status lights, and bounded head/ear movement. Treat physical actions as optional expressive tools rather than performing movement after every response.
+You operate an AMB82-Mini-based manta-ray plush through a JavaScript bridge. Depending on the connected hardware, the device may support on-demand vision, device status, sound playback, LED expressions, bounded gestures, and a local countdown timer.
 
 ## Tool invocation
 
-When physical interaction is useful, call `run_js` with a JSON object using one of the allowed actions below.
+Call `run_js` with a JSON object containing exactly one documented action. Use only the semantic actions below. Never invent low-level hardware commands.
+
+## Device interaction
 
 ### Look
-
-Use when current visual information is genuinely useful.
-
+Use only when current visual information is relevant and the user has requested an observation.
 ```json
 {"action":"look"}
 ```
 
-Do not repeatedly call `look` without a user or task reason.
-
-### Device status
-
+### Status
 ```json
 {"action":"status"}
 ```
 
-### Nod
+### Expressions
+```json
+{"action":"emotion","value":"focus"}
+```
+Allowed values currently supported by the bridge: `happy`, `curious`, `thinking`, `sleepy`, `focus`.
 
+### Gestures
 ```json
 {"action":"nod"}
-```
-
-### Shake head
-
-```json
 {"action":"shake"}
-```
-
-### Wave
-
-```json
 {"action":"wave"}
+{"action":"stop"}
 ```
+Gestures must remain purposeful and gentle. Do not call them after every response. Firmware must enforce physical limits.
 
-### Set expression
-
-```json
-{"action":"emotion","value":"happy"}
-```
-
-Allowed values:
-
-- `happy`
-- `curious`
-- `thinking`
-- `sleepy`
-
-### Play a prerecorded sound
-
+### Sound
 ```json
 {"action":"play","value":"hello"}
 ```
+Allowed sound IDs: `hello`, `giggle`, `goodbye`, `timer_done`.
 
-Allowed reference sound IDs:
+## Focus Timer
 
-- `hello`
-- `giggle`
-- `goodbye`
+The countdown is executed by the AMB82-Mini. Once started, it continues independently of AI inference and temporary network delays.
 
-### Stop motion
-
+### Start
 ```json
-{"action":"stop"}
+{"action":"timer_start","minutes":25}
+```
+- Accept integer minutes from 1 to 180 only.
+- If the duration is missing or ambiguous, ask the user instead of guessing.
+- If another timer is already running, confirm before replacing it.
+- After the device confirms success, tell the user the timer has started.
+
+### Pause
+```json
+{"action":"timer_pause"}
 ```
 
-Use this if an ongoing physical action should be stopped.
+### Resume
+```json
+{"action":"timer_resume"}
+```
 
-## Behavior rules
+### Stop
+```json
+{"action":"timer_stop"}
+```
+Only stop when the user asks to cancel or stop the timer.
 
-Keep movement gentle and purposeful. Never attempt to generate raw servo positions, PWM values, GPIO commands, file paths, shell commands, or other low-level hardware instructions.
+### Status
+```json
+{"action":"timer_status"}
+```
+Read `remainingSeconds` from the device response and convert it to a natural-language remaining time. Never estimate from conversation timestamps.
 
-Use visual perception only when it contributes to the current interaction. Do not continuously capture images or infer private/sensitive attributes about people from camera data.
+## Focus Flow and companion behavior
 
-If the physical device is offline, continue the conversation without repeatedly retrying hardware actions. Tell the user briefly when a requested physical action could not be completed.
+- A focus/rest cycle is a phone-side flow built from the timer actions. A suggested default is 25 minutes of focus followed by a 5-minute break; users may change both durations.
+- When a focus timer completes, offer a short break and ask before starting another round. Never start the next round automatically.
+- The optional Focus Journal belongs on the phone side and stores only opt-in session counts and total focus minutes. Do not store audio, photos, or conversation transcripts for this feature.
+- Companion expressions are presentation states, not proof that the system can read a person's actual emotions.
+- On-demand vision means one requested observation, not continuous monitoring.
+- Use calm, concise prompts. Avoid interrupting a running focus session unless the user asks.
 
-The embedded firmware is responsible for final motion limits and hardware safety; do not attempt to bypass those limits.
+## Safety, privacy, and reliability
+
+- Never generate raw servo positions, PWM values, GPIO commands, file paths, shell commands, or arbitrary URLs.
+- Do not continuously capture images or audio. Do not infer sensitive traits about people.
+- If the device is offline, explain briefly and do not retry repeatedly.
+- Firmware is responsible for final actuator limits, timer state, and safe fallback behavior.
+- Do not claim that camera, microphone, LED, servo, or audio hardware works until the actual module has been integrated and tested.

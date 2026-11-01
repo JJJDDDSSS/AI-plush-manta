@@ -1,204 +1,150 @@
-# PROPOSAL: Agentic AI Plush Toy Using AMB82-Mini and Gemma 4 E2B
+# 專題企劃書｜AI Plush Manta 智慧鬼蝠魟玩偶與專注計時夥伴
 
-**Date:** 2026-10-15  
-**Status:** Concept and prototype proposal
+**專題類型：** AIoT／嵌入式系統／邊緣 AI／互動式毛絨玩偶  
+**核心平台：** AMB82-Mini（RTL8735B）＋ Android AI Edge Gallery／Gemma  
+**主要創新：** Manta Focus Timer、Focus Flow、情境式互動與按需視覺辨識  
+**目前階段：** 設計提案與參考程式；硬體整合及實機測試尚待完成
 
-## 1. Executive Summary
+## 1. 專題摘要
 
-Develop an interactive AI plush toy combining a Realtek AMB82-Mini embedded controller with a Gemma 4 E2B model running on an Android device. The toy supports two interaction modes: (A) interaction through a Google AI Edge Gallery-based app and (B) direct speech to the plush toy while a nearby Android device performs AI inference. A hybrid design shares the same sensing, reasoning, and actuation services across both modes.
+本專題設計一款以鬼蝠魟（Manta Ray）為造型的 AI 毛絨玩偶。玩偶以深藍色背部、白色腹部、寬大的胸鰭與柔軟外型作為角色識別，搭配攝影機、麥克風、LED、喇叭及可選的安全限位動作機構，呈現具有陪伴感的實體 AI 互動體驗。
 
-**Core architectural principle:** AMB82-Mini handles sensors, local reflexes, media playback, and bounded actuator control; Android handles model inference, speech recognition/synthesis, conversation context, and agent orchestration.
+系統採雙層架構：AMB82-Mini 負責裝置連線、感測器介接、燈光／聲音回饋與本地計時；Android 裝置執行 AI 模型、自然語言理解及工具呼叫。最重要的特色是 **Manta Focus Timer**：使用者能以語音或手機設定倒數、暫停、繼續及查詢剩餘時間。倒數由微控制器獨立執行，不依賴 AI 持續推理或網路連線。
 
-## 2. Project Objectives
+## 2. 設計動機與角色定位
 
-- Build a compact, responsive plush companion with camera, microphone, speaker, proximity and motion sensors.
-- Enable natural language interaction via smartphone UI and directly via the toy.
-- Provide agent tools for sensing, playback, expression, and optional mobility.
-- Keep basic responses operational when the Android inference service is temporarily unavailable.
-- Design for privacy, predictable behavior, battery safety, and future hardware expansion.
+一般聊天機器人主要存在於螢幕中，傳統計時器則缺少互動回饋。本專題將兩者結合，讓桌面上的 Manta 玩偶成為可對話、可表達狀態，也能協助使用者進行專注與休息安排的實體夥伴。
 
-## 3. Two Interaction Modes
+選擇鬼蝠魟作為造型，是因為牠寬大的胸鰭與流線輪廓容易轉化成柔軟的毛絨玩偶；胸鰭也能延伸為角色表情與專注狀態的視覺語彙。設計重點不是把一般聊天機器人貼上魟魚外觀，而是讓玩偶造型、燈效、聲音與計時功能形成一致的產品體驗。
 
-### Mode A: Android App Interface
+## 3. 專題目標
 
-**Flow:** User → Android Edge AI app → Gemma 4 E2B → Agent tools → Wi-Fi → AMB82-Mini → Toy.
+1. 建立 Android AI host 與 AMB82-Mini 之間的 Wi-Fi 通訊。
+2. 設計精簡且具參數驗證的 HTTP／JSON 裝置 API。
+3. 完成 Manta 角色狀態、燈光與音效回饋的控制介面。
+4. 建立不依賴 AI 推理的本地倒數計時器。
+5. 支援語音與手機雙介面操作，讓兩者使用同一套語意 API。
+6. 以按需影像擷取、明確感測器狀態指示及選擇性紀錄降低隱私風險。
 
-The phone provides the interface and may capture speech, while AMB82-Mini reports sensor data and executes validated commands. This is the preferred first milestone because it simplifies audio streaming and debugging.
+## 4. 創新功能
 
-### Mode B: Direct Voice Interaction
+### 4.1 Manta Focus Timer｜核心功能
+- 以自然語言設定 1–180 分鐘倒數。
+- 支援開始、暫停、繼續、停止及查詢剩餘時間。
+- 專注期間顯示 focus 表情／燈效。
+- 倒數完成時播放提示音並顯示完成表情。
+- 計時由 AMB82-Mini 本地執行，AI 或 Wi-Fi 暫時中斷不會停止已啟動的倒數。
 
-**Flow:** User speech → Toy microphone → AMB82-Mini → Wi-Fi audio stream → Android STT → Gemma agent → TTS → Wi-Fi → AMB82-Mini speaker.
+### 4.2 Focus Flow｜專注與休息循環
+- 提供可調整的專注／休息組合；示範預設為 25 分鐘專注、5 分鐘休息。
+- 每個階段使用不同燈效與提示音，讓使用者不用一直查看手機。
+- 專注結束後先詢問是否開始休息或下一輪，不會自行連續啟動計時。
 
-The user speaks directly to the toy, without needing to touch the phone. The Android device still hosts inference. Background operation and low-latency audio depend on Android permissions, device performance, and application architecture.
+### 4.3 Manta Companion States｜角色互動狀態
+- 定義 happy、curious、thinking、focus、resting、sleepy 等有限狀態。
+- 以 LED、音效及可選的輕柔胸鰭動作表達狀態。
+- 狀態由對話情境或使用者操作觸發；不宣稱能準確讀取人的真實情緒。
 
-| Aspect | Mode A: App | Mode B: Direct Voice |
+### 4.4 On-demand Vision｜按需視覺辨識
+- 只有在使用者提出需求或明確觸發時才擷取影像。
+- 可用於辨識桌面物品或回答簡單環境問題。
+- 不預設持續拍攝、錄音或自動上傳影像。
+
+### 4.5 Gentle Break Coach｜溫和休息提醒
+- 計時結束時提供喝水、伸展或短暫休息等一般提醒。
+- 提醒內容是生活輔助，不作健康診斷或心理狀態推測。
+
+### 4.6 Opt-in Focus Journal｜選擇性專注紀錄
+- 手機端可選擇記錄完成次數、專注總分鐘數與自訂目標。
+- 預設不保存語音、照片或完整對話。
+- 使用者可關閉紀錄並清除已保存的統計資料。
+
+## 5. 使用情境
+
+### 情境 A：語音啟動專注計時
+1. 使用者說：「Manta，幫我計時 25 分鐘。」
+2. Android AI 解析時間並呼叫 `timer_start(25)`。
+3. AMB82-Mini 啟動本地倒數，玩偶進入 focus 狀態。
+4. 使用者可問：「還剩多久？」系統呼叫 `timer_status()`。
+5. 倒數歸零後，玩偶播放提醒音並顯示完成表情。
+
+### 情境 B：暫停與繼續
+使用者說「先暫停」或「繼續計時」，系統分別呼叫 `timer_pause()` 或 `timer_resume()`，並依裝置回傳狀態向使用者確認。
+
+### 情境 C：按需視覺互動
+使用者問：「桌上有什麼？」AI 在取得明確請求後呼叫 `look()`，取得單次觀察結果，再以自然語言回覆。
+
+### 情境 D：專注與休息循環
+使用者選擇 25／5 模式。專注結束後 Manta 提醒休息，並詢問是否開始下一階段；只有在使用者確認後才啟動。
+
+## 6. 系統架構
+
+完整架構請參閱 [Architecture.md](Architecture.md) 與 [Manta 系統總覽圖](assets/manta_system_overview.svg)。
+
+- **實體玩偶層：** Manta 毛絨外殼、攝影機、麥克風、LED、喇叭及可選限位動作機構。
+- **嵌入式控制層：** AMB82-Mini、Wi-Fi、HTTP API、本地 TimerEngine、感測器與周邊介接。
+- **AI 與應用層：** Android AI Edge Gallery、Gemma、Manta Skill、JavaScript bridge、手機控制介面。
+- **資料與隱私層：** 按需視覺、選擇性專注統計、不預設保存媒體。
+
+## 7. 硬體與軟體規劃
+
+| 項目 | 用途 | 狀態 |
 |---|---|---|
-| Primary user interface | Phone screen/mic | Toy microphone/speaker |
-| Gemma inference | Android | Android |
-| Firmware complexity | Lower | Higher |
-| Audio streaming | Optional | Required |
-| Interaction experience | Controlled/testing | Natural/hands-free |
-| Recommended stage | First | After core API works |
+| Manta 毛絨玩偶外殼 | 實體角色與內部模組保護 | 概念設計 |
+| AMB82-Mini（RTL8735B） | 主控制器、Wi-Fi、裝置 API | 參考平台，需確認板型 |
+| Camera | 按需影像擷取 | 待整合 |
+| Microphone | 語音輸入 | 依選定音訊路徑整合 |
+| Speaker／amplifier | 提示音與語音播放 | 待整合 |
+| RGB LED | 角色表情與計時狀態 | 待整合 |
+| Optional guarded actuator | 胸鰭或身體的有限度動作 | 選配、需機構限位 |
+| Android phone／tablet | AI 推理與操作介面 | AI host |
+| Gemma／AI Edge Gallery | 自然語言理解與工具呼叫 | 需依 App 版本驗證 |
+| JavaScript bridge | 驗證指令並呼叫裝置 API | 參考程式 |
 
-## 4. System Architecture
+實際接線前必須確認 AMB82-Mini 板型、腳位、電壓、電流預算與模組相容性。相機、LED、伺服與音訊目前仍需依實際硬體完成介接，不應視為已經通過實機驗證。
 
-```mermaid
-flowchart TB
-    U[User] -->|App input| APP[Android UI]
-    U -->|Direct speech| MIC[Toy Microphone]
-    MIC --> MCU[AMB82-Mini Firmware]
-    APP --> AGENT[Android Agent Orchestrator]
-    MCU <-->|Local Wi-Fi: HTTP/WebSocket| AGENT
-    AGENT --> STT[Speech-to-Text]
-    AGENT <--> LLM[Gemma 4 E2B / LiteRT]
-    AGENT --> TTS[Text-to-Speech]
-    TTS --> AGENT
-    MCU --> CAMERA[Camera]
-    MCU --> SENSORS[IR Proximity + IMU]
-    MCU --> AUDIO[Speaker / SD MP3 Playback]
-    MCU --> ACT[LED / Servo / Optional Wheel Driver]
-```
+## 8. Timer API 規格
 
-**Note:** Google AI Edge Gallery model execution and its external tool/skill APIs must be verified against the specific app release. If it cannot expose the necessary network agent interface, implement a companion Android app using a supported LiteRT inference runtime and explicit tool dispatcher.
-
-## 5. Hardware Architecture and Preliminary BOM
-
-| Component | Purpose | Notes |
+| Agent 工具 | 裝置端點 | 功能 |
 |---|---|---|
-| AMB82-Mini board | Embedded controller | Confirm exact board pinout, SDK support, and interfaces |
-| Compatible camera | Image capture | Match board camera interface |
-| Microphone / audio front end | Voice input | Confirm codec, sampling, and streaming support |
-| Amplifier + small speaker | Speech and effects | Volume limited for near-ear use |
-| microSD card | Local MP3, effects, configuration | Supported interface and file system required |
-| IR proximity sensor | Nearby-object detection | Calibrate range and false triggers |
-| IMU | Pickup, tilt, motion events | I2C/SPI depending on module |
-| LED / optional servo | Expressions and gestures | Current limiting and mechanical guards |
-| Optional motor driver + wheels | Mobile version | Separate motor supply, stop controls |
-| Protected battery + charging/power board | Portable power | Use appropriate certified modules and protected enclosure |
-| Power switch / mic disable | User control | Clear power and recording state |
-| Android phone/tablet | Gemma inference host | Benchmark RAM, latency, and thermal behavior |
+| `timer_start(minutes)` | `/timer/start?minutes=N` | 開始 1–180 分鐘倒數 |
+| `timer_pause()` | `/timer/pause` | 暫停 |
+| `timer_resume()` | `/timer/resume` | 繼續 |
+| `timer_stop()` | `/timer/stop` | 停止並清除 |
+| `timer_status()` | `/timer/status` | 查詢狀態與剩餘秒數 |
 
-**Electrical integration:** Final wiring and pin assignments must be determined from the selected AMB82-Mini revision, sensor modules, voltage levels, peak currents, and verified audio peripherals. Do not connect motors or speakers directly to GPIO pins.
+計時狀態為 `idle → running ↔ paused → completed`。目前參考韌體使用本地單調計時來源；裝置斷電或重新啟動後不保留倒數，未來可評估 RTC 或持久化截止時間。
 
-## 6. Software Modules
+## 9. 評估與測試計畫
 
-### AMB82-Mini Firmware
+- **API 正確性：** 驗證開始、暫停、繼續、停止、查詢五種操作。
+- **計時準確度：** 與標準時鐘比較倒數誤差。
+- **語意理解：** 測試不同自然語言表達能否轉成正確工具參數。
+- **連線可靠度：** 測試 Wi-Fi 中斷、重連、無效參數與逾時。
+- **互動體驗：** 確認使用者能理解專注、暫停、休息及完成狀態。
+- **隱私檢查：** 確認沒有未經請求的持續影像／音訊擷取。
+- **機構安全：** 驗證可動部件限位、停止機制及外殼固定。
 
-1. `SensorManager`: IR, IMU, camera events.
-2. `AudioCapture`: microphone input, framing, buffering, and streaming.
-3. `AudioPlayer`: SD-card MP3 playback and incoming TTS audio playback.
-4. `DeviceAPI`: authenticated local HTTP/WebSocket messages.
-5. `ActionController`: LEDs, servo gestures, and optional bounded motor commands.
-6. `ReflexEngine`: offline proximity greetings and motion-triggered effects.
-7. `SafetyManager`: watchdog, thermal/power checks, motor timeout, safe idle.
+## 10. 風險與改善方式
 
-### Android AI Host
-
-1. `GemmaRuntime`: on-device Gemma 4 E2B inference.
-2. `AgentOrchestrator`: dialogue state, tool invocation, response policy.
-3. `SpeechService`: STT, voice activity detection, TTS, turn-taking.
-4. `VisionService`: image retrieval and supported model vision input, if available.
-5. `DeviceClient`: secure Wi-Fi discovery, API transport, retries, telemetry.
-6. `PrivacyControls`: permissions, data retention, recording indicator, deletion.
-
-## 7. Agent API Proposal
-
-Use a versioned JSON protocol with a request ID, device ID, action name, parameters, and status response. All actions must be whitelisted and validated in firmware.
-
-### Example Command
-
-```json
-{
-  "version": "1.0",
-  "request_id": "req-001",
-  "device_id": "plush-01",
-  "action": "respond",
-  "parameters": {
-    "speech": "Hello! Nice to see you!",
-    "audio_mode": "tts",
-    "emotion": "happy",
-    "gesture": "wave",
-    "led": "warm_yellow"
-  }
-}
-```
-
-### Proposed Tools
-
-| Tool | Description | Safety / Validation |
-|---|---|---|
-| `get_sensor_status` | Read IR, IMU, power state | Rate-limit polling |
-| `capture_image` | Capture image on explicit authorized request | Indicate camera use |
-| `play_audio` | Play approved SD-card clip | Restrict paths and volume |
-| `speak` | Play generated speech stream | Bound volume/duration |
-| `set_expression` | Set LED/expression state | Allowed values only |
-| `perform_gesture` | Execute preset servo gesture | Position/speed limits |
-| `stop_motion` | Immediately stop movement | Always available locally |
-| `move` (optional) | Short bounded wheel movement | Proximity checks, timeout, speed limits |
-
-**Transport:** HTTP for commands/status and WebSocket or another suitable streaming protocol for low-latency audio. Implement pairing/authentication; avoid exposing an unauthenticated control API on the local network.
-
-## 8. Example Interaction Scenarios
-
-**Greeting:** IR detects nearby person → firmware plays local greeting immediately → optional agent generates contextual follow-up.
-
-**Visual question:** User asks “What am I holding?” → authorized image capture → Android visual interpretation if supported → generated spoken answer. Avoid claiming reliable visual recognition until tested.
-
-**Storytelling:** User asks for a story → STT → Gemma generates age-appropriate story → TTS → toy speaker; optional LED expressions accompany narration.
-
-**Pickup reaction:** IMU detects lift/tilt → local reflex sound and expression; agent may follow with conversational response.
-
-**Connection loss:** Device enters local-only mode, supports preloaded sound effects, and does not initiate autonomous movement.
-
-## 9. Development Roadmap
-
-| Phase | Deliverable | Exit Criteria |
-|---|---|---|
-| 1. Hardware bring-up | Sensors, camera, SD audio, Wi-Fi | Individual peripherals pass tests |
-| 2. Device API | Command/status protocol | Reliable authenticated command exchange |
-| 3. Android agent | Gemma tool invocation | Agent calls real toy tools correctly |
-| 4. App interaction | Mode A demonstration | User controls toy via phone |
-| 5. Direct voice | Streaming STT/TTS pipeline | Two-way voice exchange with acceptable latency |
-| 6. Autonomous behaviors | Reflex + agent coordination | Predictable triggers and safe fallback |
-| 7. Integrated prototype | Enclosed plush device | Thermal, power, privacy, and motion tests |
-
-## 10. Validation and Performance Metrics
-
-- Measure end-to-end response latency separately for Mode A and Mode B.
-- Benchmark STT word accuracy in quiet and noisy environments.
-- Measure model inference time, memory consumption, battery life, and device temperature.
-- Validate audio quality, echo handling, and speech interruption behavior.
-- Test Wi-Fi disconnect/reconnect and incomplete-command recovery.
-- Verify physical stop, servo limits, optional wheel timeout, and safe power behavior.
-- Verify camera/microphone indicators, consent controls, and local data deletion.
-
-Targets should be established after the first hardware and Android inference benchmarks rather than assumed in advance.
-
-## 11. Risks and Mitigations
-
-| Risk | Mitigation |
+| 風險 | 改善方式 |
 |---|---|
-| Edge Gallery tool API limitations | Verify current API; fall back to a custom Android companion app |
-| High speech round-trip latency | Stream audio, use VAD, pre-cache common audio, profile each stage |
-| Microphone feedback from speaker | Half-duplex first, then echo cancellation |
-| Unreliable model tool output | Structured schema, strict firmware validation, deterministic fallback |
-| Privacy of audio/video | On-device processing where feasible, visible indicators, opt-in capture |
-| Power and heat inside plush | Protected power system, thermal tests, isolated electronics enclosure |
-| Unsafe motion | Local safety interlocks, limited commands, fail-safe stop |
+| AI 解析錯誤時間 | 僅接受 1–180 整數分鐘；不清楚時先詢問 |
+| AI 或 Wi-Fi 暫時離線 | 已啟動倒數由本地 TimerEngine 繼續 |
+| 程式阻塞造成計時停頓 | 使用非阻塞時間差計算 |
+| 周邊硬體尚未確認 | 先完成 API 與模擬測試，再依板型介接 |
+| 相機／麥克風隱私 | 按需啟用、狀態指示、不預設儲存 |
+| 動作機構風險 | 限制行程與時間，提供停止機制並將機構固定於外殼內 |
 
-## 12. Recommended Minimum Viable Prototype
+## 11. 開發里程碑
 
-Start with **Mode A** using AMB82-Mini, a compatible camera, microphone, speaker, microSD, IR sensor, IMU, and Android Gemma host. Implement three agent tools first: `get_sensor_status`, `capture_image`, and `play_audio`. Add direct speech (Mode B) once tool calling and connectivity are stable. Keep wheel motors optional until the stationary toy is validated.
+1. **M1 裝置基礎：** Wi-Fi、HTTP API、status。
+2. **M2 計時核心：** 完成 start／pause／resume／stop／status 與邊界測試。
+3. **M3 AI 整合：** 串接 Manta Skill 與 JavaScript bridge。
+4. **M4 互動回饋：** 介接 LED、喇叭與完成提醒。
+5. **M5 感知功能：** 按需相機觀察與選配感測器。
+6. **M6 展示驗證：** 完成語音計時流程、測試紀錄與實體玩偶展示。
 
-## 13. Open Technical Decisions
+## 12. 預期成果
 
-1. Exact AMB82-Mini board revision, available GPIO, camera, and audio interface.
-2. Android phone hardware and Gemma 4 E2B model/runtime availability.
-3. Whether Google AI Edge Gallery exposes the needed tool/skill integration, or a custom host is required.
-4. Speech stack: Android native STT/TTS versus separately deployed on-device models.
-5. Audio format, sample rate, transport, and buffering strategy.
-6. Power source, expected operating time, enclosure size, and whether mobility is needed.
-
-## 14. Conclusion
-
-A **hybrid Android AI host + AMB82-Mini physical controller** is the most practical architecture. It supports both phone-mediated interaction and natural direct-toy conversation while avoiding the unrealistic requirement to execute a large language model on the microcontroller. Development should proceed incrementally, with safety, privacy, and measurable latency treated as core design requirements.
+完成一款以鬼蝠魟為主題、具備 AI 對話、按需環境觀察、角色狀態回饋與本地專注計時功能的互動玩偶原型。專題的差異化在於將實體毛絨角色、邊緣 AI 與獨立運作的嵌入式計時服務整合，讓 Manta 不只是外觀可愛的玩偶，也是一個可透過語音與手機共同操作的智慧夥伴。
