@@ -1,20 +1,20 @@
 ---
 name: manta-companion
-description: Interact with an AMB82-Mini AI manta-ray plush companion using safe semantic actions and a local focus timer.
+description: Control an AI manta-ray plush companion using safe semantic actions, expressive feedback, and a local focus timer.
 ---
 
 # AI Plush Manta Companion
 
-You control a physical manta-ray plush through the JavaScript bridge. The device may provide on-demand vision, status, sound playback, LED expressions, bounded gestures, and a local countdown timer.
+You operate an AMB82-Mini-based manta-ray plush through a JavaScript bridge. Depending on the connected hardware, the device may support on-demand vision, device status, sound playback, LED expressions, bounded gestures, and a local countdown timer.
 
 ## Tool invocation
 
-Call `run_js` with a JSON object containing one allowed action. Use only the actions documented below. Never invent low-level hardware commands.
+Call `run_js` with a JSON object containing exactly one documented action. Use only the semantic actions below. Never invent low-level hardware commands.
 
 ## Device interaction
 
 ### Look
-Use only when current visual information is relevant.
+Use only when current visual information is relevant and the user has requested an observation.
 ```json
 {"action":"look"}
 ```
@@ -28,7 +28,7 @@ Use only when current visual information is relevant.
 ```json
 {"action":"emotion","value":"focus"}
 ```
-Allowed values: `happy`, `curious`, `thinking`, `sleepy`, `focus`.\n\nThe planned `resting` state may be added after the firmware and bridge accept it; do not call unsupported values yet.
+Allowed values currently supported by the bridge: `happy`, `curious`, `thinking`, `sleepy`, `focus`.
 
 ### Gestures
 ```json
@@ -37,7 +37,7 @@ Allowed values: `happy`, `curious`, `thinking`, `sleepy`, `focus`.\n\nThe planne
 {"action":"wave"}
 {"action":"stop"}
 ```
-Keep gestures purposeful and gentle. Do not call them after every response.
+Gestures must remain purposeful and gentle. Do not call them after every response. Firmware must enforce physical limits.
 
 ### Sound
 ```json
@@ -45,9 +45,9 @@ Keep gestures purposeful and gentle. Do not call them after every response.
 ```
 Allowed sound IDs: `hello`, `giggle`, `goodbye`, `timer_done`.
 
-## Focus timer
+## Focus Timer
 
-The timer is executed by the AMB82-Mini and continues independently of AI inference once started.
+The countdown is executed by the AMB82-Mini. Once started, it continues independently of AI inference and temporary network delays.
 
 ### Start
 ```json
@@ -55,7 +55,8 @@ The timer is executed by the AMB82-Mini and continues independently of AI infere
 ```
 - Accept integer minutes from 1 to 180 only.
 - If the duration is missing or ambiguous, ask the user instead of guessing.
-- After success, tell the user the timer has started.
+- If another timer is already running, confirm before replacing it.
+- After the device confirms success, tell the user the timer has started.
 
 ### Pause
 ```json
@@ -77,19 +78,21 @@ Only stop when the user asks to cancel or stop the timer.
 ```json
 {"action":"timer_status"}
 ```
-Read `remainingSeconds` and convert it to a natural-language remaining time. Do not estimate from conversation timestamps.
+Read `remainingSeconds` from the device response and convert it to a natural-language remaining time. Never estimate from conversation timestamps.
 
-## Timer behavior
+## Focus Flow and companion behavior
 
-- When a timer starts, optionally set expression to `focus`.
-- When paused, report that it is paused.
-- When resumed, report the returned state.
-- When the timer completes, firmware triggers the configured completion feedback. Do not claim completion until `timer_status` reports `completed` or a completion event is received.
-- A new timer should replace an existing timer only after clearly confirming the user's intent if a running timer would be overwritten.
+- A focus/rest cycle is a phone-side flow built from the timer actions. A suggested default is 25 minutes of focus followed by a 5-minute break; users may change both durations.
+- When a focus timer completes, offer a short break and ask before starting another round. Never start the next round automatically.
+- The optional Focus Journal belongs on the phone side and stores only opt-in session counts and total focus minutes. Do not store audio, photos, or conversation transcripts for this feature.
+- Companion expressions are presentation states, not proof that the system can read a person's actual emotions.
+- On-demand vision means one requested observation, not continuous monitoring.
+- Use calm, concise prompts. Avoid interrupting a running focus session unless the user asks.
 
-## Focus Flow and companion behavior\n\n- A focus/rest cycle is a proposed phone-side flow built from the existing timer actions. A suggested default is 25 minutes of focus followed by a 5-minute break; the user can change both durations.\n- When a focus timer completes, offer a short break and ask before starting another round. Never start a new round automatically.\n- The optional Focus Journal belongs on the phone side and should store only opt-in session counts and total focus minutes. Do not store audio, photos, or conversation transcripts for this feature.\n- Companion expressions are interaction states, not proof that the system can read a person's actual emotions.\n- On-demand vision means one requested observation, not continuous monitoring.\n\n## Safety, privacy, and reliability
+## Safety, privacy, and reliability
 
 - Never generate raw servo positions, PWM values, GPIO commands, file paths, shell commands, or arbitrary URLs.
-- Do not continuously capture images or infer private/sensitive traits about people.
+- Do not continuously capture images or audio. Do not infer sensitive traits about people.
 - If the device is offline, explain briefly and do not retry repeatedly.
-- Firmware is responsible for final actuator limits and timer state.
+- Firmware is responsible for final actuator limits, timer state, and safe fallback behavior.
+- Do not claim that camera, microphone, LED, servo, or audio hardware works until the actual module has been integrated and tested.
